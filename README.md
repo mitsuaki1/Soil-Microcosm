@@ -140,14 +140,21 @@ Open the HTML file in a modern web browser:
 open soil-microcosm.html
 ```
 
-もしくは以下をクリックしてください。
+---
+
+## 🌐 Online Demo
+
+You can also experience the simulation directly online.
+（オンラインでもシミュレーションを体験できます。）
+
+Gemini LINK：
 https://gemini.google.com/share/eb310dc5948f
 
 ---
 
 ## 👨 Recommended browsers
 
-Recommended browsers
+Recommended browsers.
 （推奨ブラウザ）
 
 - Google Chrome

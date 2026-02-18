@@ -137,8 +137,11 @@ Open the HTML file in a modern web browser:
 （HTMLファイルをブラウザで開くだけで実行できます。）
 
 ```bash
-open index.html
+open soil-microcosm.html
 ```
+
+もしくは以下をクリックしてください。
+https://gemini.google.com/share/eb310dc5948f
 
 ---
 

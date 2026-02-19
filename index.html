@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hidden Networks: Soil Microcosm</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0d0b09; /* Deep soil color */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui-layer {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            background: rgba(10, 8, 6, 0.85);
+            border-top: 2px solid #5d4037;
+            padding: 20px;
+            border-radius: 8px;
+            color: #e0e0e0;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.5s ease;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            font-weight: 300;
+            color: #a1887f; /* Earthy text */
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        p {
+            margin: 0 0 20px 0;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #d7ccc8;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid #8d6e63;
+            color: #8d6e63;
+            padding: 10px 24px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: #8d6e63;
+            color: #1a120b;
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Overlay for "Cinematic" feel */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+        }
+
+        .grain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container">
+    <canvas id="soilCanvas"></canvas>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    
+    <div id="ui-layer">
+        <h2 id="scene-title">Scene 1: Surface Introduction</h2>
+        <p id="narration-text">“Beneath every step lies a living ecosystem. Soil is not inert matter, but a dynamic environment inhabited by billions of microorganisms interacting in complex networks.”</p>
+        
+        <div class="controls">
+            <button id="prev-btn" onclick="prevScene()">Previous</button>
+            <button id="next-btn" onclick="nextScene()">Next Scene</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * Script Logic & State Management
+ */
+const scenes = [
+    {
+        title: "Scene 1: Surface Introduction",
+        text: "“Beneath every step lies a living ecosystem. Soil is not inert matter, but a dynamic environment inhabited by billions of microorganisms interacting in complex networks.”",
+        config: { zoom: 1, blur: 0, bacteria: 0, fungi: 0, roots: 0, nematodes: 0, particles: 50, flow: 0.2 }
+    },
+    {
+        title: "Scene 2: Structure & Microhabitats",
+        text: "“Within microscopic pores, water and nutrients create habitats where bacteria and fungi establish communities known as biofilms.”",
+        config: { zoom: 2.5, blur: 2, bacteria: 100, fungi: 5, roots: 0, nematodes: 0, particles: 30, flow: 0.1 }
+    },
+    {
+        title: "Scene 3: Fungal-Plant Symbiosis",
+        text: "“Mycorrhizal fungi form symbiotic relationships with plant roots, exchanging mineral nutrients for carbon compounds produced through photosynthesis.”",
+        config: { zoom: 3, blur: 3, bacteria: 120, fungi: 40, roots: 1, nematodes: 0, particles: 20, flow: 0.1, exchange: true }
+    },
+    {
+        title: "Scene 4: Cooperation & Competition",
+        text: "“Bacteria cooperate and compete simultaneously. Chemical signals coordinate behavior, allowing populations to respond collectively to environmental change.”",
+        config: { zoom: 4, blur: 4, bacteria: 300, fungi: 40, roots: 1, nematodes: 0, particles: 20, flow: 0.3, signaling: true }
+    },
+    {
+        title: "Scene 5: Predation",
+        text: "“Predators such as protozoa and nematodes regulate microbial populations, releasing nutrients back into the soil through grazing.”",
+        config: { zoom: 3.5, blur: 2, bacteria: 250, fungi: 40, roots: 1, nematodes: 3, particles: 20, flow: 0.5 }
+    },
+    {
+        title: "Scene 6: Nutrient Cycling",
+        text: "“Through decomposition, microorganisms recycle carbon and nitrogen, sustaining plant growth and maintaining ecosystem stability.”",
+        config: { zoom: 3, blur: 2, bacteria: 200, fungi: 35, roots: 1, nematodes: 3, particles: 100, flow: 0.2, decomposition: true }
+    },
+    {
+        title: "Scene 7: Ecosystem Scale",
+        text: "“These invisible networks form the foundation of terrestrial life. Soil microorganisms shape fertility, regulate climate processes, and sustain ecosystems worldwide.”",
+        config: { zoom: 1.5, blur: 1, bacteria: 500, fungi: 100, roots: 3, nematodes: 5, particles: 150, flow: 0.1 }
+    },
+    {
+        title: "Scene 8: Closing Sequence",
+        text: "“What appears silent beneath the ground is a living system in constant motion — a hidden world where cooperation, competition, and transformation never cease.”",
+        config: { zoom: 1, blur: 0, bacteria: 0, fungi: 150, roots: 5, nematodes: 0, particles: 50, flow: 0.1, fadeOut: true }
+    }
+];
+
+let currentSceneIndex = 0;
+const canvas = document.getElementById('soilCanvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+
+// Entities Storage
+let particles = [];
+let bacteria = [];
+let fungi = []; // Hyphae points
+let roots = [];
+let nematodes = [];
+
+// Screen Dimensions
+let width, height;
+
+// Simulation State (interpolated for smooth transitions)
+let state = {
+    zoom: 1,
+    opacity: 1
+};
+
+/**
+ * Setup & Resize
+ */
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    initScene(currentSceneIndex, true); // Re-init entities on resize
+}
+
+window.addEventListener('resize', resize);
+
+/**
+ * Entity Classes
+ */
+
+class SoilParticle {
+    constructor(x, y, z) {
+        this.x = x || Math.random() * width;
+        this.y = y || Math.random() * height;
+        this.z = z || Math.random() * 2 + 0.5; // Depth factor
+        this.size = (Math.random() * 15 + 5);
+        this.color = `rgba(${Math.random()*40 + 30}, ${Math.random()*30 + 20}, ${Math.random()*20 + 10}, ${Math.random()*0.3 + 0.1})`;
+        this.vx = (Math.random() - 0.5) * 0.1;
+        this.vy = (Math.random() - 0.5) * 0.1;
+    }
+
+    update(flowSpeed) {
+        this.x += this.vx * flowSpeed;
+        this.y += this.vy * flowSpeed;
+
+        // Wrap around
+        if (this.x > width + 50) this.x = -50;
+        if (this.x < -50) this.x = width + 50;
+        if (this.y > height + 50) this.y = -50;
+        if (this.y < -50) this.y = height + 50;
+    }
+
+    draw(ctx, zoom) {
+        let drawSize = this.size * this.z * zoom;
+        if (drawSize < 0.5) return;
+        
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        // Draw irregular shape
+        ctx.arc(this.x, this.y, drawSize, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+class Bacterium {
+    constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 1.5 + 0.5;
+        this.type = Math.random() > 0.7 ? 'rod' : 'sphere'; // Rod or Sphere
+        this.angle = Math.random() * Math.PI * 2;
+        this.state = 'normal'; // normal, signaling, dying
+        this.timer = Math.random() * 100;
+    }
+
+    update(targetZoom, signaling, decomposition) {
+        // Brownian motion + subtle drift
+        this.x += this.vx + (Math.random() - 0.5) * 0.2;
+        this.y += this.vy + (Math.random() - 0.5) * 0.2;
+        this.angle += 0.05;
+        this.timer++;
+
+        // Wrap
+        if (this.x > width) this.x = 0;
+        if (this.x < 0) this.x = width;
+        if (this.y > height) this.y = 0;
+        if (this.y < 0) this.y = height;
+
+        // Signaling effect (pulsing color)
+        if (signaling && Math.sin(this.timer * 0.05) > 0.8) {
+            this.state = 'signal';
+        } else {
+            this.state = 'normal';
+        }
+        
+        // Decomposition effect (fading out/changing color)
+        if (decomposition && Math.random() > 0.995) {
+             this.x = Math.random() * width; // Respawn elsewhere to simulate turnover
+             this.y = Math.random() * height;
+        }
+    }
+
+    draw(ctx, zoom) {
+        let r = this.radius * zoom;
+        if (r < 0.5) r = 0.5;
+        
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        if (this.state === 'signal') {
+            ctx.fillStyle = `rgba(100, 255, 100, 0.8)`; // Green glow signal
+            ctx.shadowBlur = 10 * zoom;
+            ctx.shadowColor = "rgba(100, 255, 100, 0.5)";
+        } else {
+            ctx.fillStyle = `rgba(180, 200, 180, 0.7)`;
+            ctx.shadowBlur = 0;
+        }
+
+        if (this.type === 'sphere') {
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Rod shape
+            ctx.beginPath();
+            ctx.roundRect(-r*2, -r/2, r*4, r, r/2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+}
+
+class Root {
+    constructor(x, y, thickness) {
+        this.x = x;
+        this.y = y;
+        this.thickness = thickness;
+        this.segments = [];
+        this.grow();
+    }
+
+    grow() {
+        let currX = this.x;
+        let currY = this.y;
+        let angle = Math.PI / 2 + (Math.random() - 0.5) * 0.5; // Downwards
+
+        for(let i=0; i<30; i++) {
+            let len = Math.random() * 20 + 20;
+            angle += (Math.random() - 0.5) * 0.3;
+            let nextX = currX + Math.cos(angle) * len;
+            let nextY = currY + Math.sin(angle) * len;
+            this.segments.push({x1: currX, y1: currY, x2: nextX, y2: nextY, w: this.thickness * (1 - i/30)});
+            currX = nextX;
+            currY = nextY;
+        }
+    }
+
+    draw(ctx, zoom, exchange) {
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        
+        this.segments.forEach((seg, i) => {
+            let width = seg.w * zoom;
+            if(width < 0.5) return;
+
+            ctx.beginPath();
+            ctx.moveTo(seg.x1, seg.y1);
+            ctx.lineTo(seg.x2, seg.y2);
+            
+            // Texture/Color
+            ctx.strokeStyle = "#5d4037"; // Dark wood
+            ctx.lineWidth = width;
+            ctx.stroke();
+            
+            // Inner core
+            ctx.strokeStyle = "#8d6e63"; // Lighter wood
+            ctx.lineWidth = width * 0.6;
+            ctx.stroke();
+
+            // Nutrient exchange visualization
+            if (exchange && i % 3 === 0) {
+                 ctx.shadowBlur = 10;
+                 ctx.shadowColor = "rgba(255, 200, 100, 0.5)"; // Golden glow (sugars)
+            } else {
+                ctx.shadowBlur = 0;
+            }
+        });
+        ctx.shadowBlur = 0;
+    }
+}
+
+class Fungus {
+    constructor(rootX, rootY) {
+        this.originX = rootX;
+        this.originY = rootY;
+        this.branches = [];
+        this.generate(rootX, rootY, -Math.PI/2, 6); // Recursion depth 6
+    }
+
+    generate(x, y, angle, depth) {
+        if (depth <= 0) return;
+
+        let len = Math.random() * 30 + 10;
+        let endX = x + Math.cos(angle) * len;
+        let endY = y + Math.sin(angle) * len;
+
+        this.branches.push({x1: x, y1: y, x2: endX, y2: endY, depth: depth});
+
+        // Branching
+        let numBranches = Math.random() > 0.3 ? 2 : 1;
+        for (let i = 0; i < numBranches; i++) {
+            let newAngle = angle + (Math.random() - 0.5) * 1.5;
+            this.generate(endX, endY, newAngle, depth - 1);
+        }
+    }
+
+    draw(ctx, zoom) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"; // Hyphae white
+        ctx.lineWidth = 1 * zoom;
+        if(ctx.lineWidth < 0.5) ctx.lineWidth = 0.5;
+        
+        ctx.beginPath();
+        this.branches.forEach(b => {
+            ctx.moveTo(b.x1, b.y1);
+            ctx.lineTo(b.x2, b.y2);
+        });
+        ctx.stroke();
+    }
+}
+
+class Nematode {
+    constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.segments = 15;
+        this.history = [];
+        for(let i=0; i<this.segments; i++) {
+            this.history.push({x: this.x - i*5, y: this.y});
+        }
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = 1.5;
+        this.turnSpeed = 0.05;
+    }
+
+    update() {
+        // Move head
+        this.angle += (Math.random() - 0.5) * 0.2;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+
+        // Wrap
+        if(this.x < 0) this.x = width;
+        if(this.x > width) this.x = 0;
+        if(this.y < 0) this.y = height;
+        if(this.y > height) this.y = 0;
+
+        // Update history (snake body)
+        this.history.unshift({x: this.x, y: this.y});
+        this.history.pop();
+    }
+
+    draw(ctx, zoom) {
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(200, 200, 200, 0.4)";
+        ctx.lineWidth = 3 * zoom;
+        ctx.lineCap = "round";
+
+        // Draw spline through history
+        if (this.history.length > 0) {
+            ctx.moveTo(this.history[0].x, this.history[0].y);
+            for(let i=1; i<this.history.length; i++) {
+                ctx.lineTo(this.history[i].x, this.history[i].y);
+            }
+        }
+        ctx.stroke();
+
+        // Internal gut line
+        ctx.strokeStyle = "rgba(100, 80, 80, 0.5)";
+        ctx.lineWidth = 1 * zoom;
+        ctx.stroke();
+    }
+}
+
+/**
+ * Scene Management
+ */
+
+function initScene(index, isResize = false) {
+    const config = scenes[index].config;
+    
+    // Smooth transition vars
+    state.targetZoom = config.zoom;
+
+    // Entity Management - Rebalance populations
+    // Particles
+    while(particles.length < config.particles) particles.push(new SoilParticle());
+    while(particles.length > config.particles) particles.pop();
+
+    // Bacteria
+    if (config.bacteria > bacteria.length) {
+        for(let i=bacteria.length; i<config.bacteria; i++) bacteria.push(new Bacterium());
+    } else {
+        bacteria.splice(config.bacteria); // Trim
+    }
+
+    // Roots
+    if (!isResize) { // Don't redraw roots constantly on minor updates
+        roots = [];
+        for(let i=0; i<config.roots; i++) {
+            roots.push(new Root(Math.random() * width, -50, Math.random() * 10 + 5));
+        }
+    }
+
+    // Fungi
+    if (!isResize && config.fungi > 0 && roots.length > 0) {
+        fungi = [];
+        // Attach fungi to roots or random
+        for(let i=0; i<config.fungi; i++) {
+            let parentRoot = roots[Math.floor(Math.random()*roots.length)];
+            // Find a random point on root
+            let seg = parentRoot.segments[Math.floor(Math.random()*parentRoot.segments.length)];
+            fungi.push(new Fungus(seg.x1, seg.y1));
+        }
+    } else if (config.fungi > fungi.length) {
+         // Generic fill if no roots
+        for(let i=fungi.length; i<config.fungi; i++) {
+             fungi.push(new Fungus(Math.random()*width, Math.random()*height));
+        }
+    }
+
+    // Nematodes
+    while(nematodes.length < config.nematodes) nematodes.push(new Nematode());
+    while(nematodes.length > config.nematodes) nematodes.pop();
+
+    // UI Updates
+    document.getElementById('scene-title').innerText = scenes[index].title;
+    document.getElementById('narration-text').innerText = scenes[index].text;
+    document.getElementById('prev-btn').disabled = index === 0;
+    document.getElementById('next-btn').disabled = index === scenes.length - 1;
+}
+
+function nextScene() {
+    if (currentSceneIndex < scenes.length - 1) {
+        currentSceneIndex++;
+        initScene(currentSceneIndex);
+    }
+}
+
+function prevScene() {
+    if (currentSceneIndex > 0) {
+        currentSceneIndex--;
+        initScene(currentSceneIndex);
+    }
+}
+
+/**
+ * Main Render Loop
+ */
+function animate() {
+    ctx.clearRect(0, 0, width, height);
+    
+    const config = scenes[currentSceneIndex].config;
+
+    // Smooth Zoom Transition
+    const diff = config.zoom - state.zoom;
+    state.zoom += diff * 0.05;
+
+    // Apply global transforms for camera feel
+    ctx.save();
+    
+    // Simulate camera drift
+    let driftX = Math.sin(Date.now() * 0.0005) * 20;
+    let driftY = Math.cos(Date.now() * 0.0005) * 20;
+    ctx.translate(driftX, driftY);
+
+    // 1. Draw Background/Particles (Out of focus elements)
+    particles.forEach(p => {
+        p.update(config.flow);
+        p.draw(ctx, state.zoom);
+    });
+
+    // 2. Draw Roots (Base structure)
+    roots.forEach(r => r.draw(ctx, state.zoom, config.exchange));
+
+    // 3. Draw Fungi
+    fungi.forEach(f => f.draw(ctx, state.zoom));
+
+    // 4. Draw Bacteria
+    bacteria.forEach(b => {
+        b.update(state.zoom, config.signaling, config.decomposition);
+        b.draw(ctx, state.zoom);
+    });
+
+    // 5. Draw Nematodes
+    nematodes.forEach(n => {
+        n.update();
+        n.draw(ctx, state.zoom);
+    });
+    
+    ctx.restore();
+
+    // Scene 8 Fade Out effect
+    if (config.fadeOut) {
+        ctx.fillStyle = `rgba(0,0,0, ${Math.abs(Math.sin(Date.now() * 0.001)) * 0.5})`;
+        ctx.fillRect(0,0,width,height);
+    }
+
+    requestAnimationFrame(animate);
+}
+
+// Initial Launch
+resize();
+animate();
+
+</script>
+
+</body>
+</html>

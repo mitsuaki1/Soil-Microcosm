@@ -1,7 +1,6 @@
-# Soil Microcosm
-### Visualization and Programming of Soil Microbial Networks（土壌微生物ネットワークの可視化とプログラミング）
+# 土壌微生物ネットワークの可視化
 
-（GitHub Pages）https://mitsuaki1.github.io/Soil-Microcosm/
+（GitHub Pages）https://mitsuaki1.github.io/Visualization-of-soil-microbial-networks/
 
 ---
 
